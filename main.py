@@ -8,10 +8,23 @@ from PIL import Image
 import h5py
 
 from glob import glob
+import argparse
 
 from data import make_data_loader
 
 device = torch.device('cuda:0')
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--data_adress', type=str, default='./test1/',
+                    help='data address')
+parser.add_argument('--batch_size', type=int, default=16,
+                    help='Total batch size')
+parser.add_argument('--num_workers', type=int, default=4,
+                    help='Data loading num_workers')
+parser.add_argument('--gpu_mode', type=int, default=0,
+                    help='Gpu mode, 0: Single, 1: Multi, 2: Both and compare')
+
+args = parser.parse_args()
 
 # NOTE:
 # Don't know how to do Multigpu, is it possible?
@@ -165,8 +178,8 @@ data_transforms = transforms.Compose([
     ])
 
 
-loader = make_data_loader('/home/shubham/Desktop/git/for_peter/test1/',
-                 transforms=data_transforms, batch_size=16, num_workers=1)
+loader = make_data_loader(args.data_adress, transforms=data_transforms,
+                batch_size=args.batch_size, num_workers=args.num_workers)
 
 for images, labels in loader:
     images, labels = images.to(device), labels.to(device)
@@ -177,16 +190,5 @@ for images, labels in loader:
     break
 
 # TODO: Inference Single GPU VS MultiGpu
-
-
-
-
-
-
-
-
-
-
-
 
 
