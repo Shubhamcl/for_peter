@@ -9,6 +9,7 @@ import h5py
 
 from glob import glob
 import argparse
+from time import time
 
 from data import make_data_loader
 
@@ -21,20 +22,18 @@ parser.add_argument('--batch_size', type=int, default=16,
                     help='Total batch size')
 parser.add_argument('--num_workers', type=int, default=4,
                     help='Data loading num_workers')
-parser.add_argument('--gpu_mode', type=int, default=0,
+parser.add_argument('--gpu_mode', type=int, default=1,
                     help='Gpu mode, 0: Single, 1: Multi, 2: Both and compare')
 
 args = parser.parse_args()
 
 # NOTE:
-# Don't know how to do Multigpu, is it possible?
+# Don't know how to do Multigpu, is it possible? Needs testing
 # Not sure if model loading is correct
 
 
 # TODO:
-# Add AGRS for Single / Multi / Compare GPU settings
 # Add transpose to args option, since not sure about kernel
-# print Timing after each GPU setting
 # random state?
 
 # Function to check total number of parameters
@@ -181,14 +180,29 @@ data_transforms = transforms.Compose([
 loader = make_data_loader(args.data_adress, transforms=data_transforms,
                 batch_size=args.batch_size, num_workers=args.num_workers)
 
-for images, labels in loader:
-    images, labels = images.to(device), labels.to(device)
+if args.gpu_mode == 0 or args.gpu_mode == 2:
+    tim = time()
+    for images, labels in loader:
+        images, labels = images.to(device), labels.to(device)
 
-    outputs = net.forward(images)
+        outputs = net.forward(images)
 
-    print(outputs.shape)
-    break
+        print(outputs.shape)
+        break
+    print("Time taken to infer with single gpu: ", time() - tim)
 
-# TODO: Inference Single GPU VS MultiGpu
+if args.gpu_mode == 1 or args.gpu_mode == 2:
+    
+    net = nn.DataParallel(net)
+    tim = time()
+    for images, labels in loader:
+        images, labels = images.to(device), labels.to(device)
+
+        outputs = net.forward(images)
+
+        print(outputs.shape)
+        break
+    print("Time taken to infer with multiple gpus: ", time() - tim)
+
 
 
