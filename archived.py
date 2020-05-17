@@ -64,3 +64,7 @@
 print(net.block2_conv1.bias.shape)
 print(net.block2_conv1.weight.shape)
 print(f['/model_weights/block2_conv1/']['block2_conv1']['kernel:0'][:].shape)
+
+cat = Image.open('/home/shubham/Desktop/git/for_peter/train/cat.1.jpg')
+tensor = transforms.ToTensor()(cat.resize((360,360))).unsqueeze(0)
+print(net.forward(tensor).shape)

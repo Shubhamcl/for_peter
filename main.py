@@ -1,7 +1,28 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torchvision import transforms
+
+import numpy as np
+from PIL import Image
 import h5py
+
+from glob import glob
+
+from data import make_data_loader
+
+device = torch.device('cuda:0')
+
+# NOTE:
+# Don't know how to do Multigpu, is it possible?
+# Not sure if model loading is correct
+
+
+# TODO:
+# Add AGRS for Single / Multi / Compare GPU settings
+# Add transpose to args option, since not sure about kernel
+# print Timing after each GPU setting
+# random state?
 
 # Function to check total number of parameters
 def check_total_params(network):
@@ -76,13 +97,13 @@ class Net(nn.Module):
         x = F.relu(self.block5_conv2(x))
         x = F.max_pool2d(F.relu(self.block5_conv3(x)), (2, 2))
 
-        x = x.view(-1, self.num_flat_features(x))
-        x = self.fc1(x)
+        # x = x.view(-1, self.num_flat_features(x))
+        # x = self.fc(x)
 
         # If the size is a square you can only specify a single number
-        x = F.max_pool2d(F.relu(self.conv2(x)), 2)
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
+        # x = F.max_pool2d(F.relu(self.conv2(x)), 2)
+        # x = F.relu(self.fc2(x))
+        # x = self.fc3(x)
         return x
 
     def num_flat_features(self, x):
@@ -117,7 +138,8 @@ def make_param(pytorch_tensor, bias=False):
 
 # Loading weights to model
 f = h5py.File('/home/shubham/Downloads/tradeoff_network_vgg3_case10_03-0.98.hdf5')
-blocked_layers = [[net.block1_conv1, net.block1_conv2], [net.block2_conv1, net.block2_conv2],[net.block3_conv1, net.block3_conv2, net.block3_conv3], [net.block4_conv1,
+blocked_layers = [[net.block1_conv1, net.block1_conv2], [net.block2_conv1, net.block2_conv2],
+                [net.block3_conv1, net.block3_conv2, net.block3_conv3], [net.block4_conv1,
                  net.block4_conv2, net.block4_conv3], [net.block5_conv1, net.block5_conv2, 
                  net.block5_conv3]]
 
@@ -126,7 +148,45 @@ for block_number, block in enumerate(blocked_layers):
     for layer_number, layer in enumerate(block):
         layer_number += 1
         address = "block{}_conv{}".format(block_number, layer_number)
-        print(layer)
+        # print(layer)
         layer.weight = make_param(f['/model_weights/{}/'.format(address)][address]['kernel:0'][:])
         layer.bias = make_param(f['/model_weights/{}/'.format(address)][address]['bias:0'][:], True)
+
+    # TODO: add f['/model_weights/dense']['dense']['kernel:0'] and bias for last layer
+
+net = net.to(device)
+
+# Data loading
+
+data_transforms = transforms.Compose([
+        transforms.Resize((224,224)),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
+
+
+loader = make_data_loader('/home/shubham/Desktop/git/for_peter/test1/',
+                 transforms=data_transforms, batch_size=16, num_workers=1)
+
+for images, labels in loader:
+    images, labels = images.to(device), labels.to(device)
+
+    outputs = net.forward(images)
+
+    print(outputs.shape)
+    break
+
+# TODO: Inference Single GPU VS MultiGpu
+
+
+
+
+
+
+
+
+
+
+
+
 
