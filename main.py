@@ -18,6 +18,8 @@ device = torch.device('cuda:0')
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_adress', type=str, default='./test1/',
                     help='data address')
+parser.add_argument('--model_weights', type=str, default='./tradeoff_network_vgg3_case10_03-0.98.hdf5',
+                    help='data address')
 parser.add_argument('--batch_size', type=int, default=16,
                     help='Total batch size')
 parser.add_argument('--num_workers', type=int, default=4,
@@ -149,7 +151,7 @@ def make_param(pytorch_tensor, bias=False):
     return pytorch_tensor
 
 # Loading weights to model
-f = h5py.File('/home/shubham/Downloads/tradeoff_network_vgg3_case10_03-0.98.hdf5')
+f = h5py.File(args.model_weights)
 blocked_layers = [[net.block1_conv1, net.block1_conv2], [net.block2_conv1, net.block2_conv2],
                 [net.block3_conv1, net.block3_conv2, net.block3_conv3], [net.block4_conv1,
                  net.block4_conv2, net.block4_conv3], [net.block5_conv1, net.block5_conv2, 
