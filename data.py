@@ -5,7 +5,7 @@ import numpy as np
 from glob import glob
 from os.path import join
 
-data_path = "/home/shubham/Desktop/git/for_peter/test1/"
+data_path = "./test1/"
 
 
 # Dataset

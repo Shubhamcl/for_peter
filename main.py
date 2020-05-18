@@ -63,29 +63,29 @@ class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
         # Block 1
-        self.block1_conv1 = nn.Conv2d(3, 64, 3, 1)
-        self.block1_conv2 = nn.Conv2d(64, 64, 3, 1)
+        self.block1_conv1 = nn.Conv2d(3, 64, 3, 1, 1)
+        self.block1_conv2 = nn.Conv2d(64, 64, 3, 1, 1)
 
         # Block 2
-        self.block2_conv1 = nn.Conv2d(64, 128, 3, 1)
-        self.block2_conv2 = nn.Conv2d(128, 128, 3, 1)
+        self.block2_conv1 = nn.Conv2d(64, 128, 3, 1, 1)
+        self.block2_conv2 = nn.Conv2d(128, 128, 3, 1, 1)
         
         # Block 3
-        self.block3_conv1 = nn.Conv2d(128, 256, 3, 1)
-        self.block3_conv2 = nn.Conv2d(256, 256, 3, 1)
-        self.block3_conv3 = nn.Conv2d(256, 256, 3, 1)
+        self.block3_conv1 = nn.Conv2d(128, 256, 3, 1, 1)
+        self.block3_conv2 = nn.Conv2d(256, 256, 3, 1, 1)
+        self.block3_conv3 = nn.Conv2d(256, 256, 3, 1, 1)
         
         # Block 4
-        self.block4_conv1 = nn.Conv2d(256, 512, 3, 1)
-        self.block4_conv2 = nn.Conv2d(512, 512, 3, 1)
-        self.block4_conv3 = nn.Conv2d(512, 512, 3, 1)
+        self.block4_conv1 = nn.Conv2d(256, 512, 3, 1, 1)
+        self.block4_conv2 = nn.Conv2d(512, 512, 3, 1, 1)
+        self.block4_conv3 = nn.Conv2d(512, 512, 3, 1, 1)
         
         # Block 5
-        self.block5_conv1 = nn.Conv2d(512, 512, 3, 1)
-        self.block5_conv2 = nn.Conv2d(512, 512, 3, 1)
-        self.block5_conv3 = nn.Conv2d(512, 512, 3, 1)
+        self.block5_conv1 = nn.Conv2d(512, 512, 3, 1, 1)
+        self.block5_conv2 = nn.Conv2d(512, 512, 3, 1, 1)
+        self.block5_conv3 = nn.Conv2d(512, 512, 3, 1, 1)
 
-        self.fc = nn.Linear(25088, 3)  # 6*6 from image dimension
+        self.fc = nn.Linear(25088, 3)
 
     def forward(self, x):
         # Block 1
@@ -111,13 +111,9 @@ class Net(nn.Module):
         x = F.relu(self.block5_conv2(x))
         x = F.max_pool2d(F.relu(self.block5_conv3(x)), (2, 2))
 
-        # x = x.view(-1, self.num_flat_features(x))
-        # x = self.fc(x)
+        x = x.view(-1, self.num_flat_features(x))
+        x = self.fc(x)
 
-        # If the size is a square you can only specify a single number
-        # x = F.max_pool2d(F.relu(self.conv2(x)), 2)
-        # x = F.relu(self.fc2(x))
-        # x = self.fc3(x)
         return x
 
     def num_flat_features(self, x):
@@ -141,7 +137,7 @@ net = Net()
 # convert kernelxkernel , incoming, outgoing TO outgoing, incoming, kernelxkernel
 
 def make_param(pytorch_tensor, bias=False):
-    # NOTE: Experimental, one should work
+    # NOTE: Experimental, one should work, not sure if kernel weight should be transposed or not.
     if not bias:
         pytorch_tensor = pytorch_tensor.transpose((3,2,0,1))
         # pytorch_tensor = h5_tensor.transpose((3,2,1,0))
@@ -190,7 +186,7 @@ if args.gpu_mode == 0 or args.gpu_mode == 2:
         outputs = net.forward(images)
 
         print(outputs.shape)
-        break
+        
     print("Time taken to infer with single gpu: ", time() - tim)
 
 if args.gpu_mode == 1 or args.gpu_mode == 2:
@@ -203,7 +199,7 @@ if args.gpu_mode == 1 or args.gpu_mode == 2:
         outputs = net.forward(images)
 
         print(outputs.shape)
-        break
+        
     print("Time taken to infer with multiple gpus: ", time() - tim)
 
 
